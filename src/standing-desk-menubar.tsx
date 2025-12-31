@@ -1,4 +1,4 @@
-import { MenuBarExtra, Icon, showHUD } from "@raycast/api";
+import { MenuBarExtra, Icon, showHUD, LocalStorage, getPreferenceValues } from "@raycast/api";
 import { useState, useEffect } from "react";
 import {
   getCurrentState,
@@ -11,6 +11,43 @@ import {
   getCurrentSessionElapsedTime,
   type DeskState,
 } from "./utils/standing-desk-utils";
+
+async function showHUDAnimated(message: string, pulses: number = 3) {
+  // Create an animated pulsing effect by timing HUD displays
+  // HUD shows for ~2s, then fades out over ~0.5s
+  for (let i = 0; i < pulses; i++) {
+    // Show the HUD
+    await showHUD(message);
+    
+    if (i < pulses - 1) {
+      // Wait for HUD to be fully visible (1.5s)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Wait for fade-out to complete (0.8s)
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Small pause before next pulse (0.3s) for breathing effect
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }
+}
+
+const MOTIVATION_MESSAGES = [
+  "💪 Time to stand up! Your body will thank you!",
+  "🚶 Let's get moving! Stand up and stretch!",
+  "⚡ You've been sitting for a while. Time to stand!",
+  "🌟 Stand up for better health! You've got this!",
+  "🏃 Your daily standing goal is calling!",
+  "💡 Remember, standing is good for your health!",
+  "👍 You're doing great! Keep it up!",
+  "🎯 You're on track to reach your daily standing goal!",
+  "👏 Great job! Keep standing for your health!",
+  "💖 You're making a positive impact on your health!",
+];
+
+interface Preferences {
+  sittingWarningMinutes: string;
+  dailyStandingGoalHours: string;
+  notificationCooldownMinutes: string;
+}
 
 export default function Command() {
   const [currentState, setCurrentState] = useState<DeskState | null>(null);
@@ -35,7 +72,94 @@ export default function Command() {
     }
     
     await loadDailyStats();
+    // Check motivation after stats are loaded
+    await checkAndShowMotivation(state);
     setIsLoading(false);
+  }
+
+  async function checkAndShowMotivation(currentState: DeskState | null) {
+    try {
+      const preferences = getPreferenceValues<Preferences>();
+      const sittingWarningMinutes = parseFloat(preferences.sittingWarningMinutes) || 45;
+      const dailyStandingGoalHours = parseFloat(preferences.dailyStandingGoalHours) || 3;
+      const notificationCooldownMinutes = parseFloat(preferences.notificationCooldownMinutes) || 10;
+
+      const now = Date.now();
+      const lastNotificationTime = await LocalStorage.getItem<number>("standing-desk-last-notification");
+      const lastNotificationType = await LocalStorage.getItem<string>("standing-desk-last-notification-type");
+      
+      // Check if we should show a notification (respect cooldown)
+      if (lastNotificationTime) {
+        const minutesSinceLastNotification = (now - lastNotificationTime) / (1000 * 60);
+        if (minutesSinceLastNotification < notificationCooldownMinutes) {
+          return; // Too soon to show another notification
+        }
+      }
+
+      // Check if sitting for too long
+      if (currentState === "sitting") {
+        const sittingElapsed = await getCurrentSessionElapsedTime();
+        const sittingMinutes = sittingElapsed / 60;
+        
+        if (sittingMinutes >= sittingWarningMinutes) {
+          // Only notify if we haven't already notified for this condition
+          const notificationKey = `sitting-${Math.floor(sittingMinutes / 5) * 5}`; // Round to nearest 5 minutes
+          if (lastNotificationType === notificationKey) {
+            return; // Already notified for this condition
+          }
+          
+          const message = MOTIVATION_MESSAGES[Math.floor(Math.random() * MOTIVATION_MESSAGES.length)];
+          await showHUDAnimated(`${message} (Sitting for ${Math.floor(sittingMinutes)}m)`, 3);
+          await LocalStorage.setItem("standing-desk-last-notification", now);
+          await LocalStorage.setItem("standing-desk-last-notification-type", notificationKey);
+          return;
+        }
+      }
+
+      // Check daily standing goal - reload stats to ensure we have latest data
+      const allSessions = await getSessions();
+      const daySessions = getSessionsForPeriod(allSessions, "day");
+      const stats = calculateStats(daySessions);
+      
+      let totalStanding = stats.totalStanding;
+      if (currentState === "standing") {
+        const currentElapsed = await getCurrentSessionElapsedTime();
+        totalStanding += currentElapsed;
+      }
+
+      const standingHours = totalStanding / 3600;
+      const currentHour = new Date().getHours();
+      
+      // Only check after 2 PM (14:00) to give user time to accumulate standing time
+      // Don't show notification if user is already standing (they're actively working on it)
+      if (currentHour >= 14 && standingHours < dailyStandingGoalHours && currentState !== "standing") {
+        // Check if the last notification was for standing goal
+        const isStandingGoalNotification = lastNotificationType?.startsWith("standing-goal-");
+        
+        // If last notification was for standing goal, check if cooldown has passed
+        // This allows periodic reminders throughout the day
+        if (isStandingGoalNotification) {
+          // The cooldown check at the top of the function already handles this
+          // So if we reach here, the cooldown has passed - show the reminder
+        }
+        
+        const remainingMinutes = Math.ceil((dailyStandingGoalHours * 3600 - totalStanding) / 60);
+        const message = MOTIVATION_MESSAGES[Math.floor(Math.random() * MOTIVATION_MESSAGES.length)];
+        await showHUDAnimated(
+          `${message} (${formatDuration(totalStanding)} today, ${remainingMinutes}m to goal)`,
+          3
+        );
+        await LocalStorage.setItem("standing-desk-last-notification", now);
+        await LocalStorage.setItem("standing-desk-last-notification-type", "standing-goal");
+      } else {
+        // Clear the notification type if conditions are no longer met (before 2 PM or goal achieved)
+        if (lastNotificationType?.startsWith("standing-goal-")) {
+          await LocalStorage.removeItem("standing-desk-last-notification-type");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking motivation:", error);
+    }
   }
 
   async function loadDailyStats() {

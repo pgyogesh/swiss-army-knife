@@ -40,7 +40,33 @@
       "title": "Standing Desk",
       "description": "Show standing desk status in menubar",
       "mode": "menu-bar",
-      "interval": "10s"
+      "interval": "10s",
+      "preferences": [
+        {
+          "name": "sittingWarningMinutes",
+          "type": "textfield",
+          "required": false,
+          "title": "Sitting Warning (minutes)",
+          "description": "Show notification if sitting for more than this many minutes",
+          "default": "45"
+        },
+        {
+          "name": "dailyStandingGoalHours",
+          "type": "textfield",
+          "required": false,
+          "title": "Daily Standing Goal (hours)",
+          "description": "Target hours of standing per day",
+          "default": "3"
+        },
+        {
+          "name": "notificationCooldownMinutes",
+          "type": "textfield",
+          "required": false,
+          "title": "Notification Cooldown (minutes)",
+          "description": "Minimum minutes between notifications",
+          "default": "10"
+        }
+      ]
     },
     {
       "name": "standing-desk-toggle",
