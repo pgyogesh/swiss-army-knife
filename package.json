@@ -28,6 +28,25 @@
       "title": "Open Ticket in Obsidian",
       "description": "Opens a ticket in Obsidian based on a ticket number",
       "mode": "no-view"
+    },
+    {
+      "name": "standing-desk-tracker",
+      "title": "Standing Desk Tracker",
+      "description": "Track your standing and sitting time",
+      "mode": "view"
+    },
+    {
+      "name": "standing-desk-menubar",
+      "title": "Standing Desk",
+      "description": "Show standing desk status in menubar",
+      "mode": "menu-bar",
+      "interval": "10s"
+    },
+    {
+      "name": "standing-desk-toggle",
+      "title": "Toggle Standing/Sitting",
+      "description": "Toggle between standing and sitting states",
+      "mode": "no-view"
     }
   ],
   "dependencies": {

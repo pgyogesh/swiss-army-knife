@@ -1,1 +1,3 @@
 # Swiss Army Knife
+
+Act like you are Raycast Extension Developer. The swiss army knife is a collection of tools that I use daily. I want you to think and implement best way to track how long I stand and how long I sit. Please note that I have standing desk and I want to track how long I stand and how long I sit. It should give me per day, per week, per month stats. You will tell me what you are going to do and then I will approve it.
