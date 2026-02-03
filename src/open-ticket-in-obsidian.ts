@@ -3,7 +3,7 @@ import { open, showHUD, BrowserExtension } from "@raycast/api";
 export default async function main() {
   try {
     const tabs = await BrowserExtension.getTabs();
-    
+
     if (!tabs || tabs.length === 0) {
       await showHUD("No browser tabs found. Make sure the Raycast browser extension is installed and Dia is open.");
       return;

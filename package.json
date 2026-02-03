@@ -30,48 +30,9 @@
       "mode": "no-view"
     },
     {
-      "name": "standing-desk-tracker",
-      "title": "Standing Desk Tracker",
-      "description": "Track your standing and sitting time",
-      "mode": "view"
-    },
-    {
-      "name": "standing-desk-menubar",
-      "title": "Standing Desk",
-      "description": "Show standing desk status in menubar",
-      "mode": "menu-bar",
-      "interval": "10s",
-      "preferences": [
-        {
-          "name": "sittingWarningMinutes",
-          "type": "textfield",
-          "required": false,
-          "title": "Sitting Warning (minutes)",
-          "description": "Show notification if sitting for more than this many minutes",
-          "default": "45"
-        },
-        {
-          "name": "dailyStandingGoalHours",
-          "type": "textfield",
-          "required": false,
-          "title": "Daily Standing Goal (hours)",
-          "description": "Target hours of standing per day",
-          "default": "3"
-        },
-        {
-          "name": "notificationCooldownMinutes",
-          "type": "textfield",
-          "required": false,
-          "title": "Notification Cooldown (minutes)",
-          "description": "Minimum minutes between notifications",
-          "default": "10"
-        }
-      ]
-    },
-    {
-      "name": "standing-desk-toggle",
-      "title": "Toggle Standing/Sitting",
-      "description": "Toggle between standing and sitting states",
+      "name": "open-obsidian-file-in-cursor",
+      "title": "Open Obsidian File in Cursor",
+      "description": "Opens the currently open file in Obsidian with Cursor",
       "mode": "no-view"
     }
   ],
